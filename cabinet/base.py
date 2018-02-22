@@ -4,6 +4,7 @@ import os
 import re
 from PIL import Image
 
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.files.base import File
 from django.db import models
@@ -12,7 +13,9 @@ from django.utils.translation import ugettext_lazy as _
 from versatileimagefield.fields import PPOIField, VersatileImageField
 
 
-UPLOAD_TO = 'cabinet/%Y/%m'
+UPLOAD_TO = getattr(settings, 'CABINET_UPLOAD_TO', 'cabinet/%Y/%m')
+IMAGES_UPLOAD_TO = getattr(settings, 'CABINET_IMAGES_UPLOAD_TO', UPLOAD_TO)
+DOWNLOADS_UPLOAD_TO = getattr(settings, 'CABINET_DOWNLOADS_UPLOAD_TO', UPLOAD_TO)
 
 
 def upload_is_image(data):
@@ -48,7 +51,7 @@ class InvalidFileError(Exception):
 class ImageMixin(models.Model):
     image_file = VersatileImageField(
         _('image'),
-        upload_to=UPLOAD_TO,
+        upload_to=IMAGES_UPLOAD_TO,
         width_field='image_width',
         height_field='image_height',
         ppoi_field='image_ppoi',
@@ -108,7 +111,7 @@ class DownloadMixin(models.Model):
 
     download_file = models.FileField(
         _('download'),
-        upload_to=UPLOAD_TO,
+        upload_to=DOWNLOADS_UPLOAD_TO,
         blank=True,
     )
     download_type = models.CharField(
