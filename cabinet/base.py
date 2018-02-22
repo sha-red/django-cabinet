@@ -16,7 +16,9 @@ from django.utils.translation import ugettext_lazy as _
 from imagefield.fields import ImageField, PPOIField
 
 
-UPLOAD_TO = "cabinet/%Y/%m"
+UPLOAD_TO = getattr(settings, 'CABINET_UPLOAD_TO', 'cabinet/%Y/%m')
+IMAGES_UPLOAD_TO = getattr(settings, 'CABINET_IMAGES_UPLOAD_TO', UPLOAD_TO)
+DOWNLOADS_UPLOAD_TO = getattr(settings, 'CABINET_DOWNLOADS_UPLOAD_TO', UPLOAD_TO)
 
 
 def upload_is_image(data):
@@ -45,7 +47,7 @@ def upload_is_image(data):
 class ImageMixin(models.Model):
     image_file = ImageField(
         _("image"),
-        upload_to=UPLOAD_TO,
+        upload_to=IMAGES_UPLOAD_TO,
         width_field="image_width",
         height_field="image_height",
         ppoi_field="image_ppoi",
@@ -120,7 +122,7 @@ class DownloadMixin(models.Model):
         ("other", _("Binary"), lambda f: True),  # Must be last
     ]
 
-    download_file = models.FileField(_("download"), upload_to=UPLOAD_TO, blank=True)
+    download_file = models.FileField(_("download"), upload_to=DOWNLOADS_UPLOAD_TO, blank=True)
     download_type = models.CharField(_("download type"), max_length=20, editable=False)
 
     class Meta:
