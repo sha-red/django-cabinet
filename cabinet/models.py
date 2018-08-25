@@ -6,11 +6,11 @@ from django.db.models import signals
 from django.dispatch import receiver
 from django.utils.translation import ugettext_lazy as _
 
-from cabinet.base import AbstractFile
+from cabinet.base import AbstractFile, DownloadMixin, ImageMixin, OverwriteMixin
 
 
-if not hasattr(settings, 'CABINET_FILE_MODEL'):
-    settings.CABINET_FILE_MODEL = 'cabinet.File'
+if not hasattr(settings, "CABINET_FILE_MODEL"):
+    settings.CABINET_FILE_MODEL = "cabinet.File"
 
 
 def get_file_model():
@@ -21,7 +21,8 @@ def get_file_model():
         return apps.get_model(settings.CABINET_FILE_MODEL, require_ready=False)
     except ValueError:
         raise ImproperlyConfigured(
-            "CABINET_FILE_MODEL must be of the form 'app_label.model_name'")
+            "CABINET_FILE_MODEL must be of the form 'app_label.model_name'"
+        )
     except LookupError:
         raise ImproperlyConfigured(
             "CABINET_FILE_MODEL refers to model '%s'"
@@ -31,22 +32,20 @@ def get_file_model():
 
 class Folder(models.Model):
     parent = models.ForeignKey(
-        'self',
+        "self",
         on_delete=models.CASCADE,
-        blank=True, null=True,
-        verbose_name=_('parent'),
-        related_name='children',
+        blank=True,
+        null=True,
+        verbose_name=_("parent"),
+        related_name="children",
     )
-    name = models.CharField(
-        _('name'),
-        max_length=100,
-    )
+    name = models.CharField(_("name"), max_length=100)
 
     class Meta:
-        ordering = ['name']
-        unique_together = [('parent', 'name')]
-        verbose_name = _('folder')
-        verbose_name_plural = _('folders')
+        ordering = ["name"]
+        unique_together = [("parent", "name")]
+        verbose_name = _("folder")
+        verbose_name_plural = _("folders")
 
     def __str__(self):
         return self.name
@@ -61,28 +60,22 @@ class Folder(models.Model):
                 break
 
     def clean(self):
-        if self.id and self.parent_id and (
-            self.id in [node.id for node in self.parent.ancestors()]
+        if (
+            self.id
+            and self.parent_id
+            and (self.id in [node.id for node in self.parent.ancestors()])
         ):
-            raise ValidationError({
-                'parent': _('Loop detected.'),
-            })
+            raise ValidationError({"parent": _("Loop detected.")})
 
 
-class File(AbstractFile):
-    caption = models.CharField(
-        _('caption'),
-        max_length=1000,
-        blank=True,
-    )
-    copyright = models.CharField(
-        _('copyright'),
-        max_length=1000,
-        blank=True,
-    )
+class File(AbstractFile, ImageMixin, DownloadMixin, OverwriteMixin):
+    FILE_FIELDS = ["image_file", "download_file"]
+
+    caption = models.CharField(_("caption"), max_length=1000, blank=True)
+    copyright = models.CharField(_("copyright"), max_length=1000, blank=True)
 
     class Meta(AbstractFile.Meta):
-        swappable = 'CABINET_FILE_MODEL'
+        swappable = "CABINET_FILE_MODEL"
 
 
 @receiver(signals.post_delete, sender=File)
