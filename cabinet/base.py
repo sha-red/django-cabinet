@@ -4,6 +4,7 @@ import os
 import re
 from PIL import Image
 
+from django.conf import settings
 from django.core.exceptions import (
     FieldDoesNotExist,
     ImproperlyConfigured,
@@ -17,8 +18,22 @@ from imagefield.fields import ImageField, PPOIField
 
 
 UPLOAD_TO = getattr(settings, 'CABINET_UPLOAD_TO', 'cabinet/%Y/%m')
-IMAGES_UPLOAD_TO = getattr(settings, 'CABINET_IMAGES_UPLOAD_TO', UPLOAD_TO)
-DOWNLOADS_UPLOAD_TO = getattr(settings, 'CABINET_DOWNLOADS_UPLOAD_TO', UPLOAD_TO)
+
+
+# Dynamically set upload_to to not pollute cabinet's migrations, but reuse
+# the field's generate_filename method
+
+def generate_filename(instance, filename, setting_name):
+    instance.file.field.upload_to = getattr(settings, setting_name, UPLOAD_TO)
+    return instance.file.field.generate_filename(instance, filename)
+
+
+def images_upload_path(instance, filename):
+    return generate_filename(instance, filename, setting_name='CABINET_IMAGES_UPLOAD_TO')
+
+
+def downloads_upload_path(instance, filename):
+    return generate_filename(instance, filename, setting_name='CABINET_DOWNLOADS_UPLOAD_TO')
 
 
 def upload_is_image(data):
@@ -47,7 +62,7 @@ def upload_is_image(data):
 class ImageMixin(models.Model):
     image_file = ImageField(
         _("image"),
-        upload_to=IMAGES_UPLOAD_TO,
+        upload_to=images_upload_path,
         width_field="image_width",
         height_field="image_height",
         ppoi_field="image_ppoi",
@@ -122,7 +137,7 @@ class DownloadMixin(models.Model):
         ("other", _("Binary"), lambda f: True),  # Must be last
     ]
 
-    download_file = models.FileField(_("download"), upload_to=DOWNLOADS_UPLOAD_TO, blank=True)
+    download_file = models.FileField(_("download"), upload_to=downloads_upload_path, blank=True)
     download_type = models.CharField(_("download type"), max_length=20, editable=False)
 
     class Meta:
