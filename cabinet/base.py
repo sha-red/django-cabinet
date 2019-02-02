@@ -137,8 +137,16 @@ class DownloadMixin(models.Model):
         ("other", _("Binary"), lambda f: True),  # Must be last
     ]
 
-    download_file = models.FileField(_("download"), upload_to=downloads_upload_path, blank=True)
-    download_type = models.CharField(_("download type"), max_length=20, editable=False)
+    download_file = models.FileField(
+        _('download'),
+        upload_to=downloads_upload_path,
+        blank=True,
+    )
+    download_type = models.CharField(
+        _('download type'),
+        max_length=20,
+        editable=False,
+    )
 
     class Meta:
         abstract = True
