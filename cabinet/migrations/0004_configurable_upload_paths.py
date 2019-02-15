@@ -8,7 +8,7 @@ import imagefield.fields
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('cabinet', '0003_file__overwrite'),
+        ("cabinet", "0004_auto_20181212_0252"),
     ]
 
     operations = [

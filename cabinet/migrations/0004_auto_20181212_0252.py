@@ -6,7 +6,9 @@ import django.utils.timezone
 
 class Migration(migrations.Migration):
 
-    dependencies = [("cabinet", "0004_configurable_upload_paths")]
+    dependencies = [
+        ('cabinet', '0003_file__overwrite'),
+    ]
 
     operations = [
         migrations.AddField(
